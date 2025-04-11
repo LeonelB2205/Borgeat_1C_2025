@@ -8,11 +8,19 @@
  *
  * @section hardConn Hardware Connection
  *
- * |    Peripheral  |   ESP32   	|
- * |:--------------:|:--------------|
- * | 	PIN_X	 	| 	GPIO_X		|
- *
- *
+ * |   Pins      |   SP32		|
+ * |:--------------:|:-------------:|
+ * | 	GPIO_20 	|	D1      	|
+ * | 	GPIO_21		| 	D2			|
+ * | 	GPIO_22	 	| 	D3			|
+ * | 	GPIO_23	    | 	D4	     	|
+ * | 	GPIO_19	    | 	SEL_1     	|
+ * | 	GPIO_18	    | 	SEL_2     	|
+ * | 	GPIO_9	    | 	SEL_3     	|
+ * | 	+5V		    | 	+5V     	|
+ * | 	GND		    | 	GND	    	|
+ * 
+ * 
  * @section changelog Changelog
  *
  * |   Date	    | Description                                    |
@@ -35,6 +43,16 @@
 #include "gpio_mcu.h"
 
 /*==================[macros and definitions]=================================*/
+/**
+ * @brief Conversor de BCD a arreglo de numeros
+ * 
+ * @param data ingresa el dato "numero a convertir"
+ * @param digits define la cantidad de digitos que tiene el dato
+ * @param bcd_number arreglo que guarda los digitos por separado
+ * 
+ * @return 0
+ */
+
 int8_t convertToBcdArray1(uint32_t data, uint8_t digits, uint8_t * bcd_number)
 {
 	for (uint8_t i = 0; i < digits; i++)
@@ -45,6 +63,7 @@ int8_t convertToBcdArray1(uint32_t data, uint8_t digits, uint8_t * bcd_number)
 	
 	return 0;
 }
+	/* Definición de estructura de datos GPIO */
 
 typedef struct 
 {
@@ -53,9 +72,9 @@ typedef struct
 
 } gpioConf_t;
 
-// gpioConf_t gpioConf[4];
 
-/* Definición de los pines GPIO para los segmentos del display */
+
+	/* Definición de los pines GPIO para los segmentos del display */
 
 gpioConf_t gpioArray[4] = {
     {GPIO_20, GPIO_OUTPUT},
@@ -63,7 +82,14 @@ gpioConf_t gpioArray[4] = {
     {GPIO_22, GPIO_OUTPUT},
     {GPIO_23, GPIO_OUTPUT}};
 
-
+/**
+ * @brief Configura los pines GPIO segun el valor de bcd 
+ * 
+ * @param digitoBCD	digito a configurar 
+ * @param gpioConf arreglo con la configuracion de pins GPIO
+ * 
+ * @return 0
+ */
 void bcdAPin (uint8_t digitoBCD, gpioConf_t gpioConf)
 {
  for (uint8_t i=0; i<4;i++)
@@ -84,6 +110,20 @@ gpioConf_t gpioMap[3] = {
     {GPIO_19, GPIO_OUTPUT},
     {GPIO_18, GPIO_OUTPUT},
     {GPIO_9, GPIO_OUTPUT}};
+
+	/**
+ * @brief Conversor de BCD a arreglo de numeros
+ * 
+ * @param data ingresa el dato "numero a convertir"
+ * @param digits define la cantidad de digitos que tiene el dato
+ * @param gpioArray arreglo con la configuracion de pins para los segmentos
+ * @param gpioMap arreglo con la configuracion de pins para los digitos
+ * @param bcd_number arreglo que guarda los datos en BCD a mostrar en el display
+ * 
+ * 
+ * @return 0
+ */
+
 
 void mostrarDisplay(uint32_t data, uint8_t digits, gpioConf_t *gpioArray, gpioConf_t *gpioMap, uint8_t *bcd_number)
 	{
@@ -124,7 +164,7 @@ void app_main(void)
         {GPIO_21, GPIO_OUTPUT}, // Conectado a la pantalla
         {GPIO_22, GPIO_OUTPUT},
         {GPIO_23, GPIO_OUTPUT}  // Vector de 4 estructuras gpioConf_t
-    };
+    };	
 
     gpioConf_t gpioMap[3] = {
         {GPIO_19, GPIO_OUTPUT},
