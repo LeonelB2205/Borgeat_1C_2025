@@ -38,6 +38,7 @@
 #include "freertos/task.h"
 #include "gpio_mcu.h"
 #include "switch.h"
+#include "neopixel_stripe.h"
 #include "gpio_mcu.h"
 #include "timer_mcu.h"
 #include "ble_mcu.h"
@@ -47,6 +48,8 @@
 #define CONFIG_MEDICION_ms 20
 #define CONFIG_TECLAS_us 1000
 #define LENGTH_SECUENCIA 15
+#define RGB_LED_PIN GPIO_16 /*> ESP32-C6-DevKitC-1 NeoPixel it's connected at GPIO_8 */
+#define RGB_LED_LENGTH 16	/*> ESP32-C6-DevKitC-1 NeoPixel has one pixel */
 
 /*==================[internal data definition]===============================*/
 
@@ -61,18 +64,18 @@ uint8_t ledActual;
 
 uint8_t iterador;
 
-uint8_t secuencia[LENGTH_SECUENCIA] = {2, 1, 2, 1, 1, 2, 2, 1, 2, 0, 1, 0, 0, 0, 2};
+uint8_t secuencia[LENGTH_SECUENCIA] = {0, 1, 2, 1, 0, 2, 0, 1, 2, 0, 2, 0, 1, 0, 2};
 
 typedef struct
 {
-	gpio_t led;
+	uint8_t led;
 	gpio_t tecla;
 } leds;
 
 leds misLeds[3] = {
-	{GPIO_11, GPIO_1},
-	{GPIO_10, GPIO_2},
-	{GPIO_5, GPIO_3}};
+	{1, GPIO_20},
+	{2, GPIO_21},
+	{3, GPIO_22}};
 
 TaskHandle_t medir_task_handle = NULL;
 TaskHandle_t inicio_task_handle = NULL;
@@ -84,6 +87,37 @@ void FuncTimerA(void *parametro)
 {
 	vTaskNotifyGiveFromISR(inicio_task_handle, pdFALSE); /* Envía una notificación a la tarea asociada a medir */
 	vTaskNotifyGiveFromISR(medir_task_handle, pdFALSE);	 /* Envía una notificación a la tarea asociada a medir */
+}
+
+/** @fn prenderLeds (uint8_t led)
+ * @brief funcion que prende los leds de los pulsadores correspondientes */
+void prenderLeds(uint8_t led)
+{
+	NeoPixelAllColor(NEOPIXEL_OFF);
+
+	switch (led)
+	{
+	case 1:
+		NeoPixelSetPixel(0, NEOPIXEL_COLOR_BLUE);
+		NeoPixelSetPixel(1, NEOPIXEL_COLOR_BLUE);
+		NeoPixelSetPixel(2, NEOPIXEL_COLOR_BLUE);
+		NeoPixelSetPixel(3, NEOPIXEL_COLOR_BLUE);
+		break;
+	case 2:
+		NeoPixelSetPixel(4, NEOPIXEL_COLOR_GREEN);
+		NeoPixelSetPixel(5, NEOPIXEL_COLOR_GREEN);
+		NeoPixelSetPixel(6, NEOPIXEL_COLOR_GREEN);
+		NeoPixelSetPixel(7, NEOPIXEL_COLOR_GREEN);
+		break;
+	case 3:
+		NeoPixelSetPixel(8, NEOPIXEL_COLOR_RED);
+		NeoPixelSetPixel(9, NEOPIXEL_COLOR_RED);
+		NeoPixelSetPixel(10, NEOPIXEL_COLOR_RED);
+		NeoPixelSetPixel(11, NEOPIXEL_COLOR_RED);
+		break;
+	default:
+		break;
+	}
 }
 
 /** @fn salidaBluetooth (void *parametro)
@@ -110,19 +144,17 @@ static void controlLed(void *vparametro)
 			{
 				if (iterador == LENGTH_SECUENCIA)
 				{
-					GPIOOff(misLeds[ledActual].led);
+					//GPIOOff(misLeds[ledActual].led);
+					NeoPixelAllOff();
 					inicio = false;
 					tiempoRespuestaTotal = tiempoRespuestaTotal/LENGTH_SECUENCIA;
-					printf("%d\r\n", tiempoRespuestaTotal);
+					printf("tiempor respuesta promedio %d ms\r\n", tiempoRespuestaTotal);
 					salidaBluetooth();
 				}
 				else
 				{
-					if (iterador > 0)
-						GPIOOff(misLeds[ledActual].led);
-
 					ledActual = secuencia[iterador];
-					GPIOOn(misLeds[ledActual].led);
+					prenderLeds(misLeds[ledActual].led);//GPIOOn(misLeds[ledActual].led);
 					encendido = true;
 					iterador++;
 				}
@@ -161,7 +193,7 @@ static void medir(void *vparametro)
 	}
 }
 
-/** @fn tecla_1 (void *parametro)
+/** @fn tecla_1 ()
  * @brief funcion que se encarga de controlar la tecla 1 */
 void tecla_1()
 {
@@ -176,6 +208,7 @@ void read_data(uint8_t *data, uint8_t length)
 /*==================[external functions definition]==========================*/
 void app_main(void)
 {
+
 	iterador = 0;
 
 	SwitchesInit();
@@ -192,15 +225,20 @@ void app_main(void)
 		.param_p = NULL};
 	TimerInit(&timer_inicio);
 
+	static neopixel_color_t color[RGB_LED_LENGTH];
+
+	NeoPixelInit(RGB_LED_PIN, RGB_LED_LENGTH, color);
+
+	NeoPixelAllOff();
+
 	for (uint8_t i=0; i<3; i++)
 	{
-		GPIOInit(misLeds[i].led, GPIO_OUTPUT);
 		GPIOInit(misLeds[i].tecla, GPIO_INPUT);
 	}
+
 	xTaskCreate(&controlLed, "ControlaLeds", 2048, NULL, 5, &inicio_task_handle);
 	xTaskCreate(&medir, "medirTiempo", 2048, NULL, 5, &medir_task_handle);
-	// xTaskCreate(&salidaBluetooth, "muestraTiempo", 2048, NULL, 5, &salidaBluetooth_task_handle);
-
+	
 	TimerStart(timer_inicio.timer);
 
 	BleInit(&ble_configuration);
