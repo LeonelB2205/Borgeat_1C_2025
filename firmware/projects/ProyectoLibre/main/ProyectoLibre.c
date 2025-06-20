@@ -2,7 +2,8 @@
  *
  * @section genDesc General Description
  *
- * Es un programa el cual devuelve por bluetooth al celular, el tiempo que tarda el usuario en apagar el led por medio
+ * Es un programa el cual devuelve por consola a la pantalla y tambien a bluetooth, 
+ * el tiempo que tarda el usuario en apagar el led por medio
  * de un pulsador.
  *
  * <a href="https://drive.google.com/...">Operation Example</a>
@@ -11,12 +12,10 @@
  *
  * |    Peripheral  |   ESP32   	|
  * |:--------------:|:--------------|
- * | 	LED1	 	| 	GPIO_10		|
- * | 	LED2	 	| 	GPIO_11		|
- * | 	LED3	 	| 	GPIO_5		|
- * | 	Pulsador1	| 	GPIO_1		|
- * | 	Pulsador2	| 	GPIO_2		|
- * | 	Pulsador3	| 	GPIO_3		|
+ * | 	LED 1 2 3	| 	GPIO_8		|
+ * | 	Pulsador1	| 	GPIO_20		|
+ * | 	Pulsador2	| 	GPIO_21		|
+ * | 	Pulsador3	| 	GPIO_22		|
  *
  *
  *
@@ -45,9 +44,9 @@
 
 /*==================[macros and definitions]=================================*/
 
-#define CONFIG_MEDICION_ms 20
+#define CONFIG_MEDICION_ms 20 
 #define CONFIG_TECLAS_us 1000
-#define LENGTH_SECUENCIA 15
+#define LENGTH_SECUENCIA 15 /* tamaño de la secuencia que se quiere evaluar */
 #define RGB_LED_PIN GPIO_16 /*> ESP32-C6-DevKitC-1 NeoPixel it's connected at GPIO_8 */
 #define RGB_LED_LENGTH 16	/*> ESP32-C6-DevKitC-1 NeoPixel has one pixel */
 
@@ -64,7 +63,7 @@ uint8_t ledActual;
 
 uint8_t iterador;
 
-uint8_t secuencia[LENGTH_SECUENCIA] = {0, 1, 2, 1, 0, 2, 0, 1, 2, 0, 2, 0, 1, 0, 2};
+uint8_t secuencia[LENGTH_SECUENCIA] = {0, 1, 2, 1, 0, 2, 0, 1, 2, 0, 2, 0, 1, 0, 2}; /* secuencia predeterminada*/
 
 typedef struct
 {
@@ -83,6 +82,8 @@ TaskHandle_t salidaBluetooth_task_handle = NULL;
 
 /*==================[internal functions declaration]=========================*/
 
+/** @fn FuncTiemrA (void *parametro)
+ * @brief funcion para los timers necesarios para regir el encendido y mediciones */
 void FuncTimerA(void *parametro)
 {
 	vTaskNotifyGiveFromISR(inicio_task_handle, pdFALSE); /* Envía una notificación a la tarea asociada a medir */
@@ -144,7 +145,6 @@ static void controlLed(void *vparametro)
 			{
 				if (iterador == LENGTH_SECUENCIA)
 				{
-					//GPIOOff(misLeds[ledActual].led);
 					NeoPixelAllOff();
 					inicio = false;
 					tiempoRespuestaTotal = tiempoRespuestaTotal/LENGTH_SECUENCIA;
@@ -154,7 +154,7 @@ static void controlLed(void *vparametro)
 				else
 				{
 					ledActual = secuencia[iterador];
-					prenderLeds(misLeds[ledActual].led);//GPIOOn(misLeds[ledActual].led);
+					prenderLeds(misLeds[ledActual].led);
 					encendido = true;
 					iterador++;
 				}
@@ -201,10 +201,12 @@ void tecla_1()
 	iterador = 0;
 }
 
+/** @fn read_data(uint8_t *data, uint8_t length)
+ * @brief funcion que se utiliza para leer datos de bluetooth (vacia pq no se leen datos pero es parametro necesario) */
 void read_data(uint8_t *data, uint8_t length)
 {
 }
-
+	
 /*==================[external functions definition]==========================*/
 void app_main(void)
 {
