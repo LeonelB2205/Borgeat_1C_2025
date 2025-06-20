@@ -24,7 +24,7 @@
 */
 var NAVTREE =
 [
-  [ "Examen 2025", "index.html", ]
+  [ "Proyecto libre Borgeat", "index.html", ]
 ];
 
 var NAVTREEINDEX =
