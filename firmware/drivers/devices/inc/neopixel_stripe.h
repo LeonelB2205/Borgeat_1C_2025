@@ -33,6 +33,7 @@
 #define BUILT_IN_RGB_LED_PIN          GPIO_8        /*> ESP32-C6-DevKitC-1 NeoPixel it's connected at GPIO_8 */
 #define BUILT_IN_RGB_LED_LENGTH       1             /*> ESP32-C6-DevKitC-1 NeoPixel has one pixel */
 
+#define NEOPIXEL_OFF                  0x00000000  /*> Neopixel Off */
 #define NEOPIXEL_COLOR_WHITE          0x00FFFFFF  /*> Color white */
 #define NEOPIXEL_COLOR_RED            0x00FF0000  /*> Color red */
 #define NEOPIXEL_COLOR_ORANGE         0x00FF7D00  /*> Color orange */
